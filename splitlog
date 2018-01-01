@@ -1,0 +1,73 @@
+#!/usr/bin/perl -w
+use strict;
+use Date::Parse;
+
+my @day;
+my $text;
+my $BF;
+my $is_chan;
+
+
+sub save($)
+{
+    @day or die "Not within a day in ｢$BF.log｣\n";
+
+    my $end = $_[0];
+    printf "%04d-%02d-%02d  to  %s\n", $day[5]+1900, $day[4]+1, $day[3],
+        scalar localtime $end;
+    $text.=sprintf("--- Log closed %s\n", scalar localtime $end);
+
+    if ($is_chan || grep !/^---|(?:\d\d:\d\d -!- )/, split /\n/, $text)
+    {
+        my $OF=sprintf "%s.%04d-%02d-%02d.log", $BF,
+            $day[5]+1900, $day[4]+1, $day[3];
+        open OUT, ">>", $OF or die "Can't write to ｢$OF｣\n";
+        print OUT $text;
+        close OUT;
+        utime $end, $end, $OF;
+    }
+
+    undef @day;
+    undef $text;
+}
+
+
+for my $F (@ARGV)
+{
+    $F=~/^(.*)\.log$/ or die "Not an irssi log: ｢$F｣\n";
+    $BF=$1;
+    $is_chan=($F=~/^#/);
+    print "Splitting $BF\n";
+
+    open F, "<$F" or die "Can't read ｢$F｣\n";
+    undef @day;
+    undef $text;
+    while (<F>)
+    {
+
+        if (/^--- Log opened (.*)$/)
+        {
+            $text.=$_;
+            @day=strptime($1) or die "Can't parse date ｢$1｣\n";
+        }
+        elsif (/^--- Log closed (.*)$/)
+        {
+            my $end=str2time($1) or die "Can't parse date ｢$1｣\n";
+            save $end;
+        }
+        elsif (/--- Day changed (.*)$/)
+        {
+            my $end=str2time($1) or die "Can't parse date ｢$1｣\n";
+            save $end;
+
+            @day=strptime($1) or die "Can't parse date ｢$1｣\n";
+            $text=sprintf("--- Log opened %s\n", scalar localtime $end);
+            $text.=$_;
+        }
+        else
+        {
+            $text.=$_;
+        }
+    }
+    close F;
+}
