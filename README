@@ -1,0 +1,19 @@
+Here's a script to split irssi logs into per-day pieces.
+
+Use this if you set a scheme such as:
+   autolog_path = "~/irclogs/$tag/$0.%Y-%m-%d.log";
+only after years of using irssi, and have log files of unmanageable size.
+For example, ##crawl between Jan 2010 and Sep 2012 is 750MB big.
+
+If a partial day has an existing per-day log, this script _appends_ to it
+(you might want to use "mc" and move the files over, to append over existing
+in the right order).  Also, it's not idempotent and running it twice will
+double the logs, beware!
+
+A day that has nothing but joins and leaves is preserved in a channel log
+(one that starts with a #) but not in a personal log -- like new versions
+of irssi do.
+
+
+LICENSE: you are hereby allowed to use or abuse this script under the terms
+of any license you want.
